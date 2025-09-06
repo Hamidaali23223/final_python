@@ -19,3 +19,6 @@ opencv-python
 numpy
 pytesseract
 python-dateutil
+langchain-chroma
+langchain-openai
+pypdf
