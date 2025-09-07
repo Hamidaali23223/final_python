@@ -1,3 +1,4 @@
+from platform import platform
 from bson import ObjectId
 import cv2
 import numpy as np
@@ -29,7 +30,8 @@ ENDPOINT=env.ENDPOINT
 TOKEN=env.TOKEN
 MODEL_NAME=env.MODEL_NAME
 
-pytesseract.pytesseract.tesseract_cmd = env.TESSERACT_PATH
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = env.TESSERACT_PATH
 
 
 def set_teacher_reference_data(teacher_id, subject_id, image=None, answers=None, positions=None):
