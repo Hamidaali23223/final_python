@@ -1,4 +1,4 @@
-from platform import platform
+import platform
 from bson import ObjectId
 import cv2
 import numpy as np
