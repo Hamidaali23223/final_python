@@ -32,7 +32,8 @@ MODEL_NAME=env.MODEL_NAME
 
 if platform.system() == "Windows":
     pytesseract.pytesseract.tesseract_cmd = env.TESSERACT_PATH
-
+else:
+    pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD", "/usr/bin/tesseract")
 
 def set_teacher_reference_data(teacher_id, subject_id, image=None, answers=None, positions=None):
     key = (teacher_id, subject_id)
