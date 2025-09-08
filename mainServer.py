@@ -19,6 +19,7 @@ os.makedirs(env.UPLOAD_DIR, exist_ok=True)
 os.makedirs(env.Y_REF_DIR, exist_ok=True)
 os.makedirs(env.PROCESSED_REF_DIR, exist_ok=True)
 os.makedirs(env.PROCESSED_STUDENT_DIR, exist_ok=True)
+os.makedirs(env.CACHE_DIR, exist_ok=True)
 
 app.mount("/uploaded_refrence_images", StaticFiles(directory=env.UPLOAD_DIR), name="uploaded_refrence_images")
 app.mount("/Y_reference_images", StaticFiles(directory=env.Y_REF_DIR), name="Y_reference_images")

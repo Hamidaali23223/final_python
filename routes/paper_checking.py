@@ -1,3 +1,4 @@
+import json
 import platform
 from bson import ObjectId
 import cv2
@@ -25,6 +26,7 @@ UPLOAD_DIR=env.UPLOAD_DIR
 Y_REF_DIR=env.Y_REF_DIR
 PROCESSED_REF_DIR=env.PROCESSED_REF_DIR
 PROCESSED_STUDENT_DIR=env.PROCESSED_STUDENT_DIR
+CACHE_DIR=env.CACHE_DIR
 
 ENDPOINT=env.ENDPOINT
 TOKEN=env.TOKEN
@@ -36,27 +38,51 @@ else:
     pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD", "/usr/bin/tesseract")
 
 def set_teacher_reference_data(teacher_id, subject_id, image=None, answers=None, positions=None):
-    key = (teacher_id, subject_id)
-    if key not in teacher_reference_data:
-        teacher_reference_data[key] = {}
+    path = os.path.join(CACHE_DIR, f"{teacher_id}_{subject_id}.json")
+    data = {}
+    if os.path.exists(path):
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            data = {}  # reset if file is empty or invalid
 
     if image is not None:
-        teacher_reference_data[key]['image'] = image
+        img_path = os.path.join(CACHE_DIR, f"{teacher_id}_{subject_id}.png")
+        cv2.imwrite(img_path, image)   # save numpy array as image
+        data["image_path"] = img_path
+
     if answers is not None:
-        teacher_reference_data[key]['answers'] = answers
+        data["answers"] = answers
     if positions is not None:
-        teacher_reference_data[key]['positions'] = positions
+        data["positions"] = positions
+
+    with open(path, "w") as f:
+        json.dump(data, f)
 
 def get_teacher_reference_data(teacher_id, subject_id):
-    return teacher_reference_data.get((teacher_id, subject_id), {})
+    path = os.path.join(CACHE_DIR, f"{teacher_id}_{subject_id}.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return {}
 
 def get_teacher_reference_value(teacher_id, subject_id, key_name):
-    return teacher_reference_data.get((teacher_id, subject_id), {}).get(key_name)
+    data = get_teacher_reference_data(teacher_id, subject_id)
+    if key_name == "image" and "image_path" in data:
+        return cv2.imread(data["image_path"], cv2.IMREAD_COLOR)  # 3 channels
+    return data.get(key_name)
 
 def reset_teacher_reference_data(teacher_id, subject_id):
-    key = (teacher_id, subject_id)
-    if key in teacher_reference_data:
-        del teacher_reference_data[key]
+    json_path = os.path.join(CACHE_DIR, f"{teacher_id}_{subject_id}.json")
+    img_path = os.path.join(CACHE_DIR, f"{teacher_id}_{subject_id}.png")
+    if os.path.exists(json_path):
+        os.remove(json_path)
+    if os.path.exists(img_path):
+        os.remove(img_path)
 
 def encode_image(image_data):
     """Encode image to base64"""
@@ -507,6 +533,15 @@ async def get_results():
         for item in results:
             item["_id"] = str(item["_id"])
         return {"data": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/reset-cache/{teacher_id}/{subject_id}")
+async def reset_cache(teacher_id: str, subject_id: str):
+    """Reset cache for a specific teacher and subject"""
+    try:
+        reset_teacher_reference_data(teacher_id, subject_id)
+        return {"status": "success", "message": "Cache reset successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

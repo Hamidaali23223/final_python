@@ -22,6 +22,7 @@ class ENV:
     Y_REF_DIR: str = os.getenv("Y_REF_DIR")
     PROCESSED_REF_DIR: str = os.getenv("PROCESSED_REF_DIR")
     PROCESSED_STUDENT_DIR: str = os.getenv("PROCESSED_STUDENT_DIR")
+    CACHE_DIR: str = os.getenv("CACHE_DIR")
     
     MCQ_GRID = {
         "A": 0.1,
